@@ -1,0 +1,1408 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#101418">
+<title>Cricket Shot GPS</title>
+
+<style>
+:root{
+  --bg:#101418;
+  --panel:#192027;
+  --text:#f5f7f8;
+  --muted:#9eabb5;
+  --good:#45d483;
+  --bad:#ff3b30;
+  --accent:#50a7ff;
+  --line:#2b353e;
+}
+
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  min-height:100vh;
+}
+
+main{
+  max-width:640px;
+  margin:auto;
+  padding:16px 16px calc(24px + env(safe-area-inset-bottom));
+}
+
+.hidden{display:none!important}
+
+h1{
+  font-size:22px;
+  margin:2px 0 14px;
+}
+
+.card{
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:16px;
+  padding:16px;
+  margin:12px 0;
+}
+
+label{
+  display:block;
+  color:var(--muted);
+  font-size:13px;
+  margin:12px 0 5px;
+}
+
+input,select,textarea{
+  width:100%;
+  font:inherit;
+  color:var(--text);
+  background:#0f1418;
+  border:1px solid #3a4650;
+  border-radius:10px;
+  padding:12px;
+}
+
+textarea{min-height:70px}
+
+button{
+  border:0;
+  border-radius:13px;
+  padding:14px 16px;
+  font-weight:750;
+  font-size:16px;
+  background:var(--accent);
+  color:white;
+  width:100%;
+  touch-action:manipulation;
+}
+
+button.secondary{background:#2b353e}
+
+.row{
+  display:flex;
+  gap:10px;
+}
+
+.row>*{flex:1}
+
+.status{
+  display:flex;
+  justify-content:space-between;
+  gap:8px;
+  font-size:13px;
+  color:var(--muted);
+}
+
+.dot{
+  display:inline-block;
+  width:9px;
+  height:9px;
+  border-radius:50%;
+  background:#777;
+  margin-right:6px;
+}
+
+.dot.on{background:var(--good)}
+
+.big{
+  font-size:42px;
+  font-weight:850;
+  text-align:center;
+  margin:8px 0;
+}
+
+.sub{
+  text-align:center;
+  color:var(--muted);
+}
+
+.record{
+  height:38vh;
+  min-height:240px;
+  max-height:430px;
+  border-radius:28px;
+  background:var(--bad);
+  font-size:34px;
+  box-shadow:inset 0 -8px 0 rgba(0,0,0,.15);
+}
+
+.record:active{
+  transform:scale(.99);
+  filter:brightness(.9);
+}
+
+.metrics{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+  margin:12px 0;
+}
+
+.metric{
+  background:#11171c;
+  border-radius:12px;
+  padding:10px;
+  text-align:center;
+}
+
+.metric b{
+  display:block;
+  font-size:20px;
+}
+
+.metric span{
+  font-size:11px;
+  color:var(--muted);
+}
+
+.small{
+  font-size:12px;
+  color:var(--muted);
+}
+
+#toast{
+  position:fixed;
+  left:50%;
+  bottom:30px;
+  transform:translateX(-50%);
+  background:#fff;
+  color:#111;
+  padding:10px 16px;
+  border-radius:20px;
+  font-weight:700;
+  opacity:0;
+  pointer-events:none;
+  transition:.2s;
+}
+
+#toast.show{opacity:1}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:13px;
+}
+
+td,th{
+  padding:7px 4px;
+  border-bottom:1px solid var(--line);
+  text-align:left;
+}
+
+th{color:var(--muted)}
+</style>
+</head>
+
+<body>
+
+<main>
+
+<!-- SETUP -->
+<section id="setup">
+
+<h1>Cricket Shot GPS</h1>
+
+<div class="card">
+
+<label>Batter</label>
+<input id="batter" value="Tygher">
+
+<label>Venue</label>
+<input id="venue" placeholder="e.g. Heiner Park">
+
+<div class="row">
+
+<div>
+<label>Ball</label>
+<input id="ball" value="132 g">
+</div>
+
+<div>
+<label>Bat</label>
+<input id="bat" value="Size 5">
+</div>
+
+</div>
+
+<label>Notes</label>
+<textarea id="notes" placeholder="Optional"></textarea>
+
+</div>
+
+<button id="start">START SESSION</button>
+
+<p class="small">
+Location data stays on this device unless exported.
+HTTPS and location permission are required.
+</p>
+
+</section>
+
+
+<!-- SET CREASE -->
+<section id="calibrate" class="hidden">
+
+<h1>Set the crease</h1>
+
+<div class="card">
+
+<div class="status">
+
+<span>
+<i id="dot1" class="dot"></i>
+<span id="gpsStatus1">Waiting for GPS…</span>
+</span>
+
+<span id="acc1">—</span>
+
+</div>
+
+<div class="big" id="coordAcc">—</div>
+
+<div class="sub">
+current reported accuracy
+</div>
+
+</div>
+
+<p>
+Stand at the batting crease.
+Wait for the accuracy to settle, then save it.
+</p>
+
+<button id="setCrease">
+SET CREASE
+</button>
+
+<button id="cancel" class="secondary" style="margin-top:10px">
+BACK
+</button>
+
+</section>
+
+
+<!-- FIELD MODE -->
+<section id="field" class="hidden">
+
+<div class="status">
+
+<span>
+<i id="dot2" class="dot"></i>
+<span id="gpsStatus2">GPS</span>
+</span>
+
+<span id="fieldAcc">—</span>
+
+</div>
+
+<div class="card" style="padding:10px 14px">
+
+<div class="status">
+
+<b id="sessionName" style="color:white"></b>
+
+<span>Crease ✓</span>
+
+</div>
+
+</div>
+
+
+<div class="big">
+BALL <span id="ballNo">1</span>
+</div>
+
+
+<button id="record" class="record">
+
+RECORD
+<br>
+BALL
+
+</button>
+
+
+<div class="metrics">
+
+<div class="metric">
+
+<b id="lastDistance">—</b>
+
+<span>LAST DISTANCE</span>
+
+</div>
+
+
+<div class="metric">
+
+<b id="lastAccuracy">—</b>
+
+<span>GPS ACCURACY</span>
+
+</div>
+
+</div>
+
+
+<div class="row">
+
+<button id="undo" class="secondary">
+UNDO LAST
+</button>
+
+<button id="end" class="secondary">
+END SESSION
+</button>
+
+</div>
+
+
+<div class="card">
+
+<div class="status">
+
+<span>Latest shots</span>
+
+<span id="fixCount">
+0 fixes
+</span>
+
+</div>
+
+<table>
+
+<thead>
+
+<tr>
+<th>#</th>
+<th>Distance</th>
+<th>Accuracy</th>
+<th>Time</th>
+</tr>
+
+</thead>
+
+<tbody id="history"></tbody>
+
+</table>
+
+</div>
+
+</section>
+
+
+<!-- FINISHED -->
+<section id="finished" class="hidden">
+
+<h1>Session complete</h1>
+
+<div class="card" id="summary"></div>
+
+<button id="export">
+EXPORT CSV
+</button>
+
+<button id="resume"
+class="secondary"
+style="margin-top:10px">
+
+RETURN TO SESSION
+
+</button>
+
+<button id="newSession"
+class="secondary"
+style="margin-top:10px">
+
+NEW SESSION
+
+</button>
+
+</section>
+
+</main>
+
+<div id="toast"></div>
+
+
+<script>
+
+let watchId = null;
+let currentFix = null;
+let fixes = [];
+let session = null;
+
+
+const $ = id =>
+    document.getElementById(id);
+
+
+function show(id){
+
+    [
+        'setup',
+        'calibrate',
+        'field',
+        'finished'
+    ].forEach(x =>
+
+        $(x).classList.toggle(
+            'hidden',
+            x !== id
+        )
+
+    );
+
+}
+
+
+function toast(message){
+
+    $('toast').textContent = message;
+
+    $('toast').classList.add('show');
+
+    setTimeout(
+        () => $('toast').classList.remove('show'),
+        900
+    );
+
+}
+
+
+function startGPS(){
+
+    if(!navigator.geolocation){
+
+        alert(
+            'Geolocation is not supported by this browser.'
+        );
+
+        return;
+
+    }
+
+
+    if(watchId !== null)
+        return;
+
+
+    watchId =
+    navigator.geolocation.watchPosition(
+
+        position => {
+
+            currentFix = {
+
+                lat:
+                    position.coords.latitude,
+
+                lon:
+                    position.coords.longitude,
+
+                accuracy:
+                    position.coords.accuracy,
+
+                altitude:
+                    position.coords.altitude,
+
+                speed:
+                    position.coords.speed,
+
+                heading:
+                    position.coords.heading,
+
+                timestamp:
+                    position.timestamp
+
+            };
+
+
+            fixes.push(currentFix);
+
+
+            if(fixes.length > 30)
+                fixes.shift();
+
+
+            updateGPS();
+
+        },
+
+
+        error => {
+
+            $('gpsStatus1').textContent =
+            $('gpsStatus2').textContent =
+                'GPS error: ' + error.message;
+
+        },
+
+
+        {
+
+            enableHighAccuracy:true,
+
+            maximumAge:0,
+
+            timeout:15000
+
+        }
+
+    );
+
+}
+
+
+function updateGPS(){
+
+    let accuracy =
+        currentFix
+        ? currentFix.accuracy
+        : null;
+
+
+    ['dot1','dot2']
+    .forEach(id =>
+
+        $(id).classList.toggle(
+            'on',
+            !!currentFix
+        )
+
+    );
+
+
+    $('gpsStatus1').textContent =
+    $('gpsStatus2').textContent =
+        currentFix
+        ? 'GPS active'
+        : 'Waiting for GPS…';
+
+
+    let text =
+        accuracy
+        ? `±${accuracy.toFixed(1)} m`
+        : '—';
+
+
+    $('acc1').textContent = text;
+
+    $('coordAcc').textContent = text;
+
+    $('fieldAcc').textContent = text;
+
+
+    $('fixCount').textContent =
+        `${fixes.length} recent fixes`;
+
+}
+
+
+/*
+Choose the most accurate GPS reading
+from approximately the last 8 seconds.
+*/
+
+function bestRecentFix(){
+
+    const now =
+        Date.now();
+
+
+    const recent =
+        fixes.filter(
+            f => now - f.timestamp < 8000
+        );
+
+
+    const pool =
+        recent.length
+        ? recent
+        : fixes;
+
+
+    return pool.length
+
+        ? [...pool].sort(
+            (a,b) =>
+                a.accuracy - b.accuracy
+          )[0]
+
+        : currentFix;
+
+}
+
+
+/*
+Distance between two GPS coordinates.
+Haversine formula.
+Returns metres.
+*/
+
+function hav(a,b){
+
+    const R = 6371000;
+
+    const rad =
+        x => x * Math.PI / 180;
+
+
+    const dLat =
+        rad(b.lat - a.lat);
+
+
+    const dLon =
+        rad(b.lon - a.lon);
+
+
+    const p =
+
+        Math.sin(dLat/2) ** 2
+
+        +
+
+        Math.cos(rad(a.lat))
+        *
+        Math.cos(rad(b.lat))
+        *
+        Math.sin(dLon/2) ** 2;
+
+
+    return
+
+        2 * R *
+        Math.asin(
+            Math.sqrt(p)
+        );
+
+}
+
+
+/*
+Direction from crease to ball.
+*/
+
+function bearing(a,b){
+
+    const r =
+        x => x * Math.PI / 180;
+
+    const d =
+        x => x * 180 / Math.PI;
+
+
+    const y =
+
+        Math.sin(
+            r(b.lon - a.lon)
+        )
+
+        *
+
+        Math.cos(
+            r(b.lat)
+        );
+
+
+    const x =
+
+        Math.cos(
+            r(a.lat)
+        )
+
+        *
+
+        Math.sin(
+            r(b.lat)
+        )
+
+        -
+
+        Math.sin(
+            r(a.lat)
+        )
+
+        *
+
+        Math.cos(
+            r(b.lat)
+        )
+
+        *
+
+        Math.cos(
+            r(b.lon - a.lon)
+        );
+
+
+    return
+
+        (
+            d(
+                Math.atan2(y,x)
+            )
+            +
+            360
+        )
+        %
+        360;
+
+}
+
+
+function save(){
+
+    localStorage.setItem(
+        'cricketGPS_session',
+        JSON.stringify(session)
+    );
+
+}
+
+
+/*
+START SESSION
+*/
+
+$('start').onclick = () => {
+
+    session = {
+
+        id:
+            new Date().toISOString(),
+
+        meta:{
+
+            batter:
+                $('batter').value.trim()
+                ||
+                'Batter',
+
+            venue:
+                $('venue').value.trim(),
+
+            ball:
+                $('ball').value.trim(),
+
+            bat:
+                $('bat').value.trim(),
+
+            notes:
+                $('notes').value.trim()
+
+        },
+
+        crease:null,
+
+        shots:[]
+
+    };
+
+
+    save();
+
+    show('calibrate');
+
+    startGPS();
+
+};
+
+
+$('cancel').onclick =
+    () => show('setup');
+
+
+/*
+SET CREASE
+*/
+
+$('setCrease').onclick = () => {
+
+    let fix =
+        bestRecentFix();
+
+
+    if(!fix){
+
+        alert(
+            'No GPS fix yet. Wait until GPS becomes active.'
+        );
+
+        return;
+
+    }
+
+
+    session.crease = {
+        ...fix
+    };
+
+
+    save();
+
+
+    $('sessionName').textContent =
+
+        [
+            session.meta.batter,
+            session.meta.venue
+        ]
+
+        .filter(Boolean)
+
+        .join(' — ');
+
+
+    render();
+
+    show('field');
+
+
+    toast(
+        `Crease saved ±${fix.accuracy.toFixed(1)}m`
+    );
+
+};
+
+
+/*
+RECORD BALL
+*/
+
+function recordShot(){
+
+    let fix =
+        bestRecentFix();
+
+
+    if(
+        !fix
+        ||
+        !session?.crease
+    )
+        return;
+
+
+    let shot = {
+
+        n:
+            session.shots.length + 1,
+
+        ...fix,
+
+        distance:
+            hav(
+                session.crease,
+                fix
+            ),
+
+        bearing:
+            bearing(
+                session.crease,
+                fix
+            ),
+
+        recordedAt:
+            new Date().toISOString()
+
+    };
+
+
+    session.shots.push(
+        shot
+    );
+
+
+    save();
+
+    render();
+
+
+    /*
+    Haptic confirmation
+    */
+
+    if(navigator.vibrate){
+
+        navigator.vibrate(
+            [60,40,60]
+        );
+
+    }
+
+
+    toast(
+        `Ball ${shot.n}: ${shot.distance.toFixed(1)} m`
+    );
+
+}
+
+
+$('record').onclick =
+    recordShot;
+
+
+/*
+Bluetooth keyboard /
+presentation remote support.
+
+Any device that sends one of these
+keys can record a ball.
+*/
+
+window.addEventListener(
+
+    'keydown',
+
+    event => {
+
+        if(
+            $('field')
+            .classList
+            .contains('hidden')
+        )
+            return;
+
+
+        if(
+            [
+                ' ',
+                'Enter',
+                'ArrowRight'
+            ]
+            .includes(event.key)
+        ){
+
+            event.preventDefault();
+
+            recordShot();
+
+        }
+
+    }
+
+);
+
+
+/*
+UNDO
+*/
+
+$('undo').onclick = () => {
+
+    if(
+        !session.shots.length
+    )
+        return;
+
+
+    session.shots.pop();
+
+
+    save();
+
+    render();
+
+
+    toast(
+        'Last ball removed'
+    );
+
+};
+
+
+/*
+UPDATE SCREEN
+*/
+
+function render(){
+
+    let shots =
+        session.shots;
+
+
+    let n =
+        shots.length;
+
+
+    $('ballNo').textContent =
+        n + 1;
+
+
+    if(n){
+
+        let last =
+            shots[n-1];
+
+
+        $('lastDistance').textContent =
+            last.distance.toFixed(1)
+            +
+            ' m';
+
+
+        $('lastAccuracy').textContent =
+            '±'
+            +
+            last.accuracy.toFixed(1)
+            +
+            ' m';
+
+    }
+
+    else{
+
+        $('lastDistance').textContent =
+        $('lastAccuracy').textContent =
+            '—';
+
+    }
+
+
+    $('history').innerHTML =
+
+        shots
+        .slice(-8)
+        .reverse()
+
+        .map(
+            shot => `
+
+            <tr>
+
+            <td>
+            ${shot.n}
+            </td>
+
+            <td>
+            ${shot.distance.toFixed(1)} m
+            </td>
+
+            <td>
+            ±${shot.accuracy.toFixed(1)}
+            </td>
+
+            <td>
+            ${
+                new Date(
+                    shot.recordedAt
+                )
+                .toLocaleTimeString(
+                    [],
+                    {
+                        hour:'2-digit',
+                        minute:'2-digit',
+                        second:'2-digit'
+                    }
+                )
+            }
+            </td>
+
+            </tr>
+
+            `
+        )
+
+        .join('');
+
+}
+
+
+/*
+END SESSION
+*/
+
+$('end').onclick = () => {
+
+    let shots =
+        session.shots;
+
+
+    let average =
+
+        shots.length
+
+        ?
+
+        shots.reduce(
+            (sum,x) =>
+                sum + x.distance,
+            0
+        )
+        /
+        shots.length
+
+        :
+
+        0;
+
+
+    let longest =
+
+        shots.length
+
+        ?
+
+        Math.max(
+            ...shots.map(
+                x => x.distance
+            )
+        )
+
+        :
+
+        0;
+
+
+    $('summary').innerHTML = `
+
+        <b>
+        ${session.meta.batter}
+        </b>
+
+        <br>
+
+        ${session.meta.venue || ''}
+
+        <br><br>
+
+        Shots:
+        <b>${shots.length}</b>
+
+        <br>
+
+        Average distance:
+        <b>${average.toFixed(1)} m</b>
+
+        <br>
+
+        Longest:
+        <b>${longest.toFixed(1)} m</b>
+
+    `;
+
+
+    show('finished');
+
+};
+
+
+$('resume').onclick =
+    () => show('field');
+
+
+$('newSession').onclick = () => {
+
+    if(
+        confirm(
+            'Start a new session? Current session remains available only if exported.'
+        )
+    ){
+
+        localStorage.removeItem(
+            'cricketGPS_session'
+        );
+
+
+        session = null;
+
+
+        show('setup');
+
+    }
+
+};
+
+
+/*
+CSV EXPORT
+*/
+
+$('export').onclick = () => {
+
+    let header = [
+
+        'session_id',
+        'batter',
+        'venue',
+        'ball',
+        'bat',
+        'notes',
+
+        'crease_lat',
+        'crease_lon',
+        'crease_accuracy_m',
+
+        'shot_no',
+        'recorded_at',
+
+        'latitude',
+        'longitude',
+        'accuracy_m',
+
+        'distance_m',
+        'bearing_deg'
+
+    ];
+
+
+    let escapeCSV =
+        value =>
+            '"'
+            +
+            String(
+                value ?? ''
+            )
+            .replaceAll(
+                '"',
+                '""'
+            )
+            +
+            '"';
+
+
+    let rows =
+
+        session.shots.map(
+
+            shot => [
+
+                session.id,
+
+                session.meta.batter,
+                session.meta.venue,
+                session.meta.ball,
+                session.meta.bat,
+                session.meta.notes,
+
+                session.crease.lat,
+                session.crease.lon,
+                session.crease.accuracy,
+
+                shot.n,
+
+                shot.recordedAt,
+
+                shot.lat,
+                shot.lon,
+                shot.accuracy,
+
+                shot.distance,
+
+                shot.bearing
+
+            ]
+
+            .map(
+                escapeCSV
+            )
+
+            .join(',')
+
+        );
+
+
+    let blob = new Blob(
+
+        [
+            [
+                header.join(','),
+                ...rows
+            ]
+            .join('\n')
+        ],
+
+        {
+            type:'text/csv'
+        }
+
+    );
+
+
+    let link =
+        document.createElement(
+            'a'
+        );
+
+
+    link.href =
+        URL.createObjectURL(
+            blob
+        );
+
+
+    link.download =
+
+        `cricket_shots_${
+            session.meta.batter
+            .replace(/\W+/g,'_')
+        }_${
+            new Date()
+            .toISOString()
+            .slice(0,10)
+        }.csv`;
+
+
+    link.click();
+
+
+    URL.revokeObjectURL(
+        link.href
+    );
+
+};
+
+
+/*
+Restore session if browser was
+closed or refreshed.
+*/
+
+try{
+
+    let old =
+        JSON.parse(
+            localStorage.getItem(
+                'cricketGPS_session'
+            )
+        );
+
+
+    if(old?.crease){
+
+        session =
+            old;
+
+
+        $('sessionName').textContent =
+
+            [
+                session.meta.batter,
+                session.meta.venue
+            ]
+
+            .filter(Boolean)
+
+            .join(' — ');
+
+
+        render();
+
+        show('field');
+
+        startGPS();
+
+    }
+
+}
+catch(error){}
+
+</script>
+
+</body>
+  </html>
