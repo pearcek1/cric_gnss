@@ -6,96 +6,525 @@
 <meta name="theme-color" content="#101418">
 <title>Cricket Shot GPS</title>
 <style>
-:root{--bg:#101418;--panel:#192027;--text:#f5f7f8;--muted:#9eabb5;--good:#45d483;--bad:#ff3b30;--accent:#50a7ff;--line:#2b353e}
-*{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;min-height:100vh}
-main{max-width:640px;margin:auto;padding:16px 16px calc(24px + env(safe-area-inset-bottom))}.hidden{display:none!important}
-h1{font-size:22px;margin:2px 0 14px}.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px;margin:12px 0}
-label{display:block;color:var(--muted);font-size:13px;margin:12px 0 5px}input,select,textarea{width:100%;font:inherit;color:var(--text);background:#0f1418;border:1px solid #3a4650;border-radius:10px;padding:12px}textarea{min-height:70px}
-button{border:0;border-radius:13px;padding:14px 16px;font-weight:750;font-size:16px;background:var(--accent);color:white;width:100%;touch-action:manipulation}button.secondary{background:#2b353e}button.danger{background:#6d2828}.row{display:flex;gap:10px}.row>*{flex:1}
-.status{display:flex;justify-content:space-between;gap:8px;font-size:13px;color:var(--muted)}.dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#777;margin-right:6px}.dot.on{background:var(--good)}
-.big{font-size:42px;font-weight:850;text-align:center;margin:8px 0}.sub{text-align:center;color:var(--muted)}
-.record{height:38vh;min-height:240px;max-height:430px;border-radius:28px;background:var(--bad);font-size:34px;box-shadow:inset 0 -8px 0 rgba(0,0,0,.15)}.record:active{transform:scale(.99);filter:brightness(.9)}
-.metrics{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}.metric{background:#11171c;border-radius:12px;padding:10px;text-align:center}.metric b{display:block;font-size:20px}.metric span{font-size:11px;color:var(--muted)}
-.small{font-size:12px;color:var(--muted)}#toast{position:fixed;left:50%;bottom:30px;transform:translateX(-50%);background:#fff;color:#111;padding:10px 16px;border-radius:20px;font-weight:700;opacity:0;pointer-events:none;transition:.2s}#toast.show{opacity:1}
+:root{--bg:#101418;--panel:#192027;--text:#f5f7f8;--muted:#9eabb5;--good:#45d483;--bad:#ff3b30;--accent:#50a7ff;--line:#2b353e;--warn:#ffb020}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;min-height:100vh}
+main{max-width:640px;margin:auto;padding:16px 16px calc(24px + env(safe-area-inset-bottom))}
+.hidden{display:none!important}
+h1{font-size:22px;margin:2px 0 14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px;margin:12px 0}
+label{display:block;color:var(--muted);font-size:13px;margin:12px 0 5px}
+input,textarea{width:100%;font:inherit;color:var(--text);background:#0f1418;border:1px solid #3a4650;border-radius:10px;padding:12px}
+textarea{min-height:70px}
+button{border:0;border-radius:13px;padding:14px 16px;font-weight:750;font-size:16px;background:var(--accent);color:white;width:100%;touch-action:manipulation}
+button.secondary{background:#2b353e}
+.row{display:flex;gap:10px}.row>*{flex:1}
+.status{display:flex;justify-content:space-between;gap:8px;font-size:13px;color:var(--muted)}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#777;margin-right:6px}.dot.on{background:var(--good)}
+.big{font-size:42px;font-weight:850;text-align:center;margin:8px 0}
+.sub{text-align:center;color:var(--muted)}
+.record{height:30vh;min-height:210px;max-height:360px;border-radius:28px;background:var(--bad);font-size:34px;box-shadow:inset 0 -8px 0 rgba(0,0,0,.15)}
+.record:active{transform:scale(.99);filter:brightness(.9)}
+.shot-result{background:#11171c;border:1px solid var(--line);border-radius:18px;padding:16px;margin:12px 0;text-align:center}
+.result-distance{font-size:44px;font-weight:900;line-height:1}
+.result-angle{font-size:28px;font-weight:800;margin-top:8px}
+.result-details{color:var(--muted);margin-top:10px;font-size:13px}
+.small{font-size:12px;color:var(--muted)}
+.error{background:#3a1717;border:1px solid #8d3535;border-radius:12px;padding:10px 12px;margin:10px 0;color:#ffd7d7;font-size:13px}
+#toast{position:fixed;left:50%;bottom:30px;transform:translateX(-50%);background:#fff;color:#111;padding:10px 16px;border-radius:20px;font-weight:700;opacity:0;pointer-events:none;transition:.2s;z-index:20}
+#toast.show{opacity:1}
 table{width:100%;border-collapse:collapse;font-size:13px}td,th{padding:7px 4px;border-bottom:1px solid var(--line);text-align:left}th{color:var(--muted)}
 </style>
 </head>
-<body><main>
+<body>
+<main>
+
 <section id="setup">
 <h1>Cricket Shot GPS</h1>
 <div class="card">
-<label>Batter</label><input id="batter" value="Tygher" autocomplete="off">
-<label>Venue</label><input id="venue" placeholder="e.g. Heiner Park" autocomplete="off">
+<label>Batter</label><input id="batter" value="Tygher">
+<label>Venue</label><input id="venue" placeholder="e.g. Heiner Park">
 <div class="row"><div><label>Ball</label><input id="ball" value="132 g"></div><div><label>Bat</label><input id="bat" value="Size 5"></div></div>
 <label>Notes</label><textarea id="notes" placeholder="Optional"></textarea>
 </div>
-<button id="start">START SESSION</button>
-<p class="small">Location data stays on this device unless you export it. HTTPS and location permission are required.</p>
+<button type="button" id="start">START SESSION</button>
+<p class="small">HTTPS and precise location permission are required. Test outdoors for useful GNSS accuracy.</p>
 </section>
 
 <section id="calibrate" class="hidden">
-<h1>Set the crease</h1>
+<h1>1. Set the crease</h1>
 <div class="card">
 <div class="status"><span><i id="dot1" class="dot"></i><span id="gpsStatus1">Waiting for GPS…</span></span><span id="acc1">—</span></div>
 <div class="big" id="coordAcc">—</div><div class="sub">current reported accuracy</div>
 </div>
-<p>Stand at the batting crease. Wait for the accuracy to settle, then save it.</p>
-<button id="setCrease">SET CREASE</button>
-<button id="cancel" class="secondary" style="margin-top:10px">BACK</button>
+<p>Stand at the batting crease. Wait for the GPS accuracy to settle, then save it.</p>
+<button type="button" id="setCrease">SET CREASE</button>
+<button type="button" id="cancel" class="secondary" style="margin-top:10px">BACK</button>
+</section>
+
+<section id="setStraightScreen" class="hidden">
+<h1>2. Set straight</h1>
+<div class="card">
+<div class="status"><span><i id="dotStraight" class="dot"></i><span id="gpsStatusStraight">Waiting for GPS…</span></span><span id="straightAcc">—</span></div>
+<div class="big">↑</div><div class="sub">walk straight toward the bowler's end</div>
+</div>
+<p>Walk at least 5 m directly down the pitch, ideally to the other crease, then press SET STRAIGHT.</p>
+<button type="button" id="setStraight">SET STRAIGHT</button>
+<button type="button" id="backToCrease" class="secondary" style="margin-top:10px">RESET CREASE</button>
 </section>
 
 <section id="field" class="hidden">
 <div class="status"><span><i id="dot2" class="dot"></i><span id="gpsStatus2">GPS</span></span><span id="fieldAcc">—</span></div>
-<div class="card" style="padding:10px 14px"><div class="status"><b id="sessionName" style="color:white"></b><span>Crease ✓</span></div></div>
+<div class="card" style="padding:10px 14px"><div class="status"><b id="sessionName" style="color:white"></b><span>Crease ✓ Straight ✓</span></div></div>
 <div class="big">BALL <span id="ballNo">1</span></div>
-<button id="record" class="record">RECORD<br>BALL</button>
-<div class="metrics">
-<div class="metric"><b id="lastDistance">—</b><span>LAST DISTANCE</span></div>
-<div class="metric"><b id="lastAccuracy">—</b><span>GPS ACCURACY</span></div>
+<button type="button" id="record" class="record">RECORD<br>BALL</button>
+
+<div id="errorBox" class="error hidden"></div>
+
+<div class="shot-result">
+<div class="result-distance" id="lastDistance">—</div>
+<div class="result-angle" id="lastAngle">—</div>
+<div class="result-details"><span id="lastBearing">Bearing —</span> &nbsp; | &nbsp; <span id="lastAccuracy">GPS —</span></div>
 </div>
-<div class="row"><button id="undo" class="secondary">UNDO LAST</button><button id="end" class="secondary">END SESSION</button></div>
-<div class="card"><div class="status"><span>Latest fixes</span><span id="fixCount">0 fixes</span></div><table><thead><tr><th>#</th><th>Distance</th><th>Accuracy</th><th>Time</th></tr></thead><tbody id="history"></tbody></table></div>
+
+<div class="row">
+<button type="button" id="undo" class="secondary">UNDO LAST</button>
+<button type="button" id="end" class="secondary">END SESSION</button>
+</div>
+
+<div class="card">
+<div class="status"><span>Latest shots</span><span id="fixCount">0 recent fixes</span></div>
+<table><thead><tr><th>#</th><th>Distance</th><th>Angle</th><th>Accuracy</th></tr></thead><tbody id="history"></tbody></table>
+</div>
 </section>
 
 <section id="finished" class="hidden">
-<h1>Session complete</h1><div class="card" id="summary"></div>
-<button id="export">EXPORT CSV</button><button id="resume" class="secondary" style="margin-top:10px">RETURN TO SESSION</button><button id="newSession" class="secondary" style="margin-top:10px">NEW SESSION</button>
+<h1>Session complete</h1>
+<div class="card" id="summary"></div>
+<button type="button" id="export">EXPORT CSV</button>
+<button type="button" id="resume" class="secondary" style="margin-top:10px">RETURN TO SESSION</button>
+<button type="button" id="newSession" class="secondary" style="margin-top:10px">NEW SESSION</button>
 </section>
-</main><div id="toast"></div>
+
+</main>
+<div id="toast"></div>
+
 <script>
-let watchId=null,currentFix=null,fixes=[],session=null;
+'use strict';
+
+let watchId=null;
+let currentFix=null;
+let fixes=[];
+let session=null;
+
 const $=id=>document.getElementById(id);
-function show(id){['setup','calibrate','field','finished'].forEach(x=>$(x).classList.toggle('hidden',x!==id));}
-function toast(s){$('toast').textContent=s;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),900);}
+
+function show(id){
+  ['setup','calibrate','setStraightScreen','field','finished']
+    .forEach(x=>$(x).classList.toggle('hidden',x!==id));
+}
+
+function toast(message){
+  $('toast').textContent=message;
+  $('toast').classList.add('show');
+  setTimeout(()=>$('toast').classList.remove('show'),1300);
+}
+
+function showError(message){
+  const box=$('errorBox');
+  if(!box)return;
+  box.textContent=message;
+  box.classList.remove('hidden');
+}
+
+function clearError(){
+  const box=$('errorBox');
+  if(box){box.textContent='';box.classList.add('hidden');}
+}
+
+window.addEventListener('error',event=>{
+  showError('Page error: '+(event.message||'Unknown JavaScript error'));
+});
+
 function startGPS(){
- if(!navigator.geolocation){alert('Geolocation is not supported by this browser.');return;}
- if(watchId!==null)return;
- watchId=navigator.geolocation.watchPosition(p=>{
-  currentFix={lat:p.coords.latitude,lon:p.coords.longitude,accuracy:p.coords.accuracy,altitude:p.coords.altitude,speed:p.coords.speed,heading:p.coords.heading,timestamp:p.timestamp};
-  fixes.push(currentFix); if(fixes.length>30)fixes.shift(); updateGPS();
- },e=>{ $('gpsStatus1').textContent=$('gpsStatus2').textContent='GPS error: '+e.message; },{enableHighAccuracy:true,maximumAge:0,timeout:15000});
+  if(!navigator.geolocation){
+    alert('Geolocation is not supported by this browser.');
+    return;
+  }
+  if(watchId!==null)return;
+
+  watchId=navigator.geolocation.watchPosition(
+    position=>{
+      currentFix={
+        lat:Number(position.coords.latitude),
+        lon:Number(position.coords.longitude),
+        accuracy:Number(position.coords.accuracy),
+        altitude:position.coords.altitude,
+        speed:position.coords.speed,
+        heading:position.coords.heading,
+        timestamp:Number(position.timestamp)||Date.now()
+      };
+      fixes.push(currentFix);
+      if(fixes.length>60)fixes.shift();
+      updateGPS();
+    },
+    error=>{
+      const message='GPS error: '+error.message;
+      $('gpsStatus1').textContent=message;
+      $('gpsStatusStraight').textContent=message;
+      $('gpsStatus2').textContent=message;
+    },
+    {enableHighAccuracy:true,maximumAge:0,timeout:15000}
+  );
 }
-function updateGPS(){let a=currentFix?currentFix.accuracy:null; ['dot1','dot2'].forEach(id=>$(id).classList.toggle('on',!!currentFix)); $('gpsStatus1').textContent=$('gpsStatus2').textContent=currentFix?'GPS active':'Waiting for GPS…'; let t=a?`±${a.toFixed(1)} m`:'—'; $('acc1').textContent=t;$('coordAcc').textContent=t;$('fieldAcc').textContent=t;$('fixCount').textContent=`${fixes.length} recent fixes`;}
+
+function updateGPS(){
+  const accuracy=currentFix&&Number.isFinite(currentFix.accuracy)?currentFix.accuracy:null;
+  ['dot1','dotStraight','dot2'].forEach(id=>$(id).classList.toggle('on',!!currentFix));
+
+  const status=currentFix?'GPS active':'Waiting for GPS…';
+  $('gpsStatus1').textContent=status;
+  $('gpsStatusStraight').textContent=status;
+  $('gpsStatus2').textContent=status;
+
+  const text=accuracy!==null?`±${accuracy.toFixed(1)} m`:'—';
+  $('acc1').textContent=text;
+  $('coordAcc').textContent=text;
+  $('straightAcc').textContent=text;
+  $('fieldAcc').textContent=text;
+  $('fixCount').textContent=`${fixes.length} recent fixes`;
+}
+
 function bestRecentFix(){
- const now=Date.now(); const recent=fixes.filter(f=>now-f.timestamp<8000); const pool=recent.length?recent:fixes;
- return pool.length?[...pool].sort((a,b)=>a.accuracy-b.accuracy)[0]:currentFix;
+  const now=Date.now();
+  const valid=fixes.filter(f=>
+    Number.isFinite(f.lat)&&Number.isFinite(f.lon)&&Number.isFinite(f.accuracy)
+  );
+  const recent=valid.filter(f=>now-f.timestamp<8000);
+  const pool=recent.length?recent:valid;
+  return pool.length?[...pool].sort((a,b)=>a.accuracy-b.accuracy)[0]:currentFix;
 }
-function hav(a,b){const R=6371000,rad=x=>x*Math.PI/180,dLat=rad(b.lat-a.lat),dLon=rad(b.lon-a.lon),p=Math.sin(dLat/2)**2+Math.cos(rad(a.lat))*Math.cos(rad(b.lat))*Math.sin(dLon/2)**2;return 2*R*Math.asin(Math.sqrt(p));}
-function bearing(a,b){const r=x=>x*Math.PI/180,d=x=>x*180/Math.PI,y=Math.sin(r(b.lon-a.lon))*Math.cos(r(b.lat)),x=Math.cos(r(a.lat))*Math.sin(r(b.lat))-Math.sin(r(a.lat))*Math.cos(r(b.lat))*Math.cos(r(b.lon-a.lon));return (d(Math.atan2(y,x))+360)%360;}
-function save(){localStorage.setItem('cricketGPS_session',JSON.stringify(session));}
-$('start').onclick=()=>{session={id:new Date().toISOString(),meta:{batter:$('batter').value.trim()||'Batter',venue:$('venue').value.trim(),ball:$('ball').value.trim(),bat:$('bat').value.trim(),notes:$('notes').value.trim()},crease:null,shots:[]};save();show('calibrate');startGPS();};
-$('cancel').onclick=()=>show('setup');
-$('setCrease').onclick=()=>{let f=bestRecentFix();if(!f)return alert('No GPS fix yet. Wait until GPS becomes active.');session.crease={...f};save();$('sessionName').textContent=[session.meta.batter,session.meta.venue].filter(Boolean).join(' — ');render();show('field');toast(`Crease saved ±${f.accuracy.toFixed(1)}m`);};
-function recordShot(){let f=bestRecentFix();if(!f||!session?.crease)return;let shot={n:session.shots.length+1,...f,distance:hav(session.crease,f),bearing:bearing(session.crease,f),recordedAt:new Date().toISOString()};session.shots.push(shot);save();render();if(navigator.vibrate)navigator.vibrate([60,40,60]);toast(`Ball ${shot.n}: ${shot.distance.toFixed(1)} m`);}
-$('record').onclick=recordShot;
-// Bluetooth keyboards/presenters: Space, Enter and ArrowRight record when field screen is active.
-window.addEventListener('keydown',e=>{if($('field').classList.contains('hidden'))return;if([' ','Enter','ArrowRight'].includes(e.key)){e.preventDefault();recordShot();}});
-$('undo').onclick=()=>{if(!session.shots.length)return;session.shots.pop();save();render();toast('Last ball removed');};
-function render(){let s=session.shots,n=s.length;$('ballNo').textContent=n+1;if(n){let x=s[n-1];$('lastDistance').textContent=x.distance.toFixed(1)+' m';$('lastAccuracy').textContent='±'+x.accuracy.toFixed(1)+' m';}else{$('lastDistance').textContent=$('lastAccuracy').textContent='—';}$('history').innerHTML=s.slice(-8).reverse().map(x=>`<tr><td>${x.n}</td><td>${x.distance.toFixed(1)} m</td><td>±${x.accuracy.toFixed(1)}</td><td>${new Date(x.recordedAt).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'})}</td></tr>`).join('');}
-$('end').onclick=()=>{let s=session.shots,avg=s.length?s.reduce((a,x)=>a+x.distance,0)/s.length:0,best=s.length?Math.max(...s.map(x=>x.distance)):0;$('summary').innerHTML=`<b>${session.meta.batter}</b><br>${session.meta.venue||''}<br><br>Shots: <b>${s.length}</b><br>Average distance: <b>${avg.toFixed(1)} m</b><br>Longest: <b>${best.toFixed(1)} m</b>`;show('finished');};
-$('resume').onclick=()=>show('field');
-$('newSession').onclick=()=>{if(confirm('Start a new session? Current session remains available only if exported.')){localStorage.removeItem('cricketGPS_session');session=null;show('setup');}};
-$('export').onclick=()=>{let h=['session_id','batter','venue','ball','bat','notes','crease_lat','crease_lon','crease_accuracy_m','shot_no','recorded_at','latitude','longitude','accuracy_m','distance_m','bearing_deg'];let esc=v=>'"'+String(v??'').replaceAll('"','""')+'"';let rows=session.shots.map(x=>[session.id,session.meta.batter,session.meta.venue,session.meta.ball,session.meta.bat,session.meta.notes,session.crease.lat,session.crease.lon,session.crease.accuracy,x.n,x.recordedAt,x.lat,x.lon,x.accuracy,x.distance,x.bearing].map(esc).join(','));let blob=new Blob([[h.join(','),...rows].join('\n')],{type:'text/csv'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`cricket_shots_${session.meta.batter.replace(/\W+/g,'_')}_${new Date().toISOString().slice(0,10)}.csv`;a.click();URL.revokeObjectURL(a.href);};
-// Restore interrupted session.
-try{let old=JSON.parse(localStorage.getItem('cricketGPS_session'));if(old?.crease){session=old;$('sessionName').textContent=[session.meta.batter,session.meta.venue].filter(Boolean).join(' — ');render();show('field');startGPS();}}catch(e){}
-</script></body></html>
+
+function hav(a,b){
+  if(!a||!b)return NaN;
+  const R=6371000;
+  const rad=x=>x*Math.PI/180;
+  const dLat=rad(b.lat-a.lat);
+  const dLon=rad(b.lon-a.lon);
+  const p=Math.sin(dLat/2)**2+
+    Math.cos(rad(a.lat))*Math.cos(rad(b.lat))*Math.sin(dLon/2)**2;
+  return 2*R*Math.asin(Math.sqrt(p));
+}
+
+function bearing(a,b){
+  if(!a||!b)return NaN;
+  const r=x=>x*Math.PI/180;
+  const d=x=>x*180/Math.PI;
+  const y=Math.sin(r(b.lon-a.lon))*Math.cos(r(b.lat));
+  const x=Math.cos(r(a.lat))*Math.sin(r(b.lat))-
+    Math.sin(r(a.lat))*Math.cos(r(b.lat))*Math.cos(r(b.lon-a.lon));
+  return (d(Math.atan2(y,x))+360)%360;
+}
+
+function relativeAngle(straightBearing,shotBearing){
+  let angle=shotBearing-straightBearing;
+  while(angle>180)angle-=360;
+  while(angle<-180)angle+=360;
+  return angle;
+}
+
+function angleText(angle){
+  if(!Number.isFinite(angle))return '—';
+  const abs=Math.abs(angle);
+  if(abs<2)return 'STRAIGHT';
+  return angle<0?`${abs.toFixed(1)}° LEFT`:`${abs.toFixed(1)}° RIGHT`;
+}
+
+function save(){
+  try{localStorage.setItem('cricketGPS_session_v3',JSON.stringify(session));}
+  catch(e){}
+}
+
+function setSessionName(){
+  $('sessionName').textContent=[session?.meta?.batter,session?.meta?.venue].filter(Boolean).join(' — ');
+}
+
+$('start').addEventListener('click',()=>{
+  session={
+    version:3,
+    id:new Date().toISOString(),
+    meta:{
+      batter:$('batter').value.trim()||'Batter',
+      venue:$('venue').value.trim(),
+      ball:$('ball').value.trim(),
+      bat:$('bat').value.trim(),
+      notes:$('notes').value.trim()
+    },
+    crease:null,
+    straightPoint:null,
+    straightBearing:null,
+    shots:[]
+  };
+  save();
+  show('calibrate');
+  startGPS();
+});
+
+$('cancel').addEventListener('click',()=>show('setup'));
+
+$('setCrease').addEventListener('click',()=>{
+  const fix=bestRecentFix();
+  if(!fix){alert('No GPS fix yet. Wait until GPS becomes active.');return;}
+  session.crease={...fix};
+  session.straightPoint=null;
+  session.straightBearing=null;
+  save();
+  toast(`Crease saved ±${fix.accuracy.toFixed(1)} m`);
+  show('setStraightScreen');
+});
+
+$('setStraight').addEventListener('click',()=>{
+  const fix=bestRecentFix();
+  if(!fix||!session||!session.crease){
+    alert('GPS or crease position is missing.');
+    return;
+  }
+
+  const separation=hav(session.crease,fix);
+  if(!Number.isFinite(separation)){
+    alert('Could not calculate the straight reference.');
+    return;
+  }
+  if(separation<5){
+    alert(`Move at least 5 metres down the pitch. Current measured separation is ${separation.toFixed(1)} m.`);
+    return;
+  }
+
+  const b=bearing(session.crease,fix);
+  if(!Number.isFinite(b)){
+    alert('Could not calculate pitch direction.');
+    return;
+  }
+
+  session.straightPoint={...fix};
+  session.straightBearing=b;
+  save();
+  setSessionName();
+  render();
+  show('field');
+  toast(`Straight set: ${b.toFixed(1)}°`);
+});
+
+$('backToCrease').addEventListener('click',()=>{
+  if(session){
+    session.crease=null;
+    session.straightPoint=null;
+    session.straightBearing=null;
+    save();
+  }
+  show('calibrate');
+});
+
+function recordShot(){
+  clearError();
+
+  try{
+    if(!session){
+      showError('No active session. Start a new session.');
+      return;
+    }
+    if(!Array.isArray(session.shots))session.shots=[];
+
+    const fix=bestRecentFix();
+    if(!fix){
+      showError('No GPS fix is available yet.');
+      return;
+    }
+    if(!session.crease){
+      showError('Crease has not been set.');
+      return;
+    }
+    if(!Number.isFinite(Number(session.straightBearing))){
+      showError('Straight direction has not been set.');
+      return;
+    }
+
+    const distance=hav(session.crease,fix);
+    const shotBearing=bearing(session.crease,fix);
+    const shotAngle=relativeAngle(Number(session.straightBearing),shotBearing);
+
+    if(!Number.isFinite(distance)||!Number.isFinite(shotBearing)||!Number.isFinite(shotAngle)){
+      showError('Could not calculate this shot. Please wait for another GPS fix and try again.');
+      return;
+    }
+
+    const shot={
+      n:session.shots.length+1,
+      lat:fix.lat,
+      lon:fix.lon,
+      accuracy:fix.accuracy,
+      altitude:fix.altitude,
+      speed:fix.speed,
+      heading:fix.heading,
+      timestamp:fix.timestamp,
+      distance,
+      bearing:shotBearing,
+      angle:shotAngle,
+      recordedAt:new Date().toISOString()
+    };
+
+    session.shots.push(shot);
+    save();
+    render();
+
+    if(navigator.vibrate)navigator.vibrate([60,40,60]);
+    toast(`Ball ${shot.n}: ${distance.toFixed(1)} m • ${angleText(shotAngle)}`);
+
+  }catch(err){
+    showError('Record failed: '+(err?.message||String(err)));
+  }
+}
+
+$('record').addEventListener('click',recordShot);
+
+window.addEventListener('keydown',event=>{
+  if($('field').classList.contains('hidden'))return;
+  if([' ','Enter','ArrowRight'].includes(event.key)){
+    event.preventDefault();
+    recordShot();
+  }
+});
+
+$('undo').addEventListener('click',()=>{
+  clearError();
+  if(!session||!Array.isArray(session.shots)||!session.shots.length){
+    toast('No recorded ball to undo');
+    return;
+  }
+  session.shots.pop();
+  save();
+  render();
+  toast('Last ball removed');
+});
+
+function render(){
+  if(!session)return;
+  if(!Array.isArray(session.shots))session.shots=[];
+  const shots=session.shots;
+  const n=shots.length;
+
+  $('ballNo').textContent=String(n+1);
+
+  if(n){
+    const last=shots[n-1];
+    $('lastDistance').textContent=Number(last.distance).toFixed(1)+' m';
+    $('lastAngle').textContent=angleText(Number(last.angle));
+    $('lastBearing').textContent='Bearing '+Number(last.bearing).toFixed(1)+'°';
+    $('lastAccuracy').textContent='GPS ±'+Number(last.accuracy).toFixed(1)+' m';
+  }else{
+    $('lastDistance').textContent='—';
+    $('lastAngle').textContent='—';
+    $('lastBearing').textContent='Bearing —';
+    $('lastAccuracy').textContent='GPS —';
+  }
+
+  $('history').innerHTML=shots.slice(-8).reverse().map(shot=>`
+    <tr>
+      <td>${shot.n}</td>
+      <td>${Number(shot.distance).toFixed(1)} m</td>
+      <td>${angleText(Number(shot.angle))}</td>
+      <td>±${Number(shot.accuracy).toFixed(1)}</td>
+    </tr>`).join('');
+}
+
+$('end').addEventListener('click',()=>{
+  clearError();
+
+  if(!session){
+    showError('No active session.');
+    return;
+  }
+
+  const shots=Array.isArray(session.shots)?session.shots:[];
+  const distances=shots.map(x=>Number(x.distance)).filter(Number.isFinite);
+  const average=distances.length?distances.reduce((a,b)=>a+b,0)/distances.length:0;
+  const longest=distances.length?Math.max(...distances):0;
+
+  $('summary').innerHTML=`
+    <b>${session.meta?.batter||'Batter'}</b><br>
+    ${session.meta?.venue||''}<br><br>
+    Shots: <b>${shots.length}</b><br>
+    Average distance: <b>${average.toFixed(1)} m</b><br>
+    Longest: <b>${longest.toFixed(1)} m</b>
+  `;
+
+  show('finished');
+});
+
+$('resume').addEventListener('click',()=>show('field'));
+
+$('newSession').addEventListener('click',()=>{
+  if(confirm('Start a new session? Export the current session first if you want to keep it.')){
+    localStorage.removeItem('cricketGPS_session_v3');
+    session=null;
+    fixes=[];
+    currentFix=null;
+    show('setup');
+  }
+});
+
+$('export').addEventListener('click',()=>{
+  if(!session)return;
+
+  const header=[
+    'session_id','batter','venue','ball','bat','notes',
+    'crease_lat','crease_lon','crease_accuracy_m',
+    'straight_lat','straight_lon','straight_accuracy_m','straight_bearing_deg',
+    'shot_no','recorded_at','latitude','longitude','accuracy_m',
+    'distance_m','bearing_deg','angle_from_straight_deg','direction'
+  ];
+
+  const esc=v=>'"'+String(v??'').replaceAll('"','""')+'"';
+
+  const rows=(session.shots||[]).map(shot=>[
+    session.id,session.meta.batter,session.meta.venue,session.meta.ball,session.meta.bat,session.meta.notes,
+    session.crease?.lat,session.crease?.lon,session.crease?.accuracy,
+    session.straightPoint?.lat,session.straightPoint?.lon,session.straightPoint?.accuracy,session.straightBearing,
+    shot.n,shot.recordedAt,shot.lat,shot.lon,shot.accuracy,
+    shot.distance,shot.bearing,shot.angle,
+    Math.abs(shot.angle)<2?'STRAIGHT':shot.angle<0?'LEFT':'RIGHT'
+  ].map(esc).join(','));
+
+  const blob=new Blob([[header.join(','),...rows].join('\n')],{type:'text/csv;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const link=document.createElement('a');
+  link.href=url;
+  link.download=`cricket_shots_${(session.meta.batter||'batter').replace(/\W+/g,'_')}_${new Date().toISOString().slice(0,10)}.csv`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+});
+
+/* New storage key deliberately avoids incompatible sessions from older versions. */
+try{
+  const old=JSON.parse(localStorage.getItem('cricketGPS_session_v3'));
+  if(old&&old.version===3){
+    session=old;
+    if(!Array.isArray(session.shots))session.shots=[];
+    if(session.crease&&Number.isFinite(Number(session.straightBearing))){
+      setSessionName();
+      render();
+      show('field');
+      startGPS();
+    }else if(session.crease){
+      show('setStraightScreen');
+      startGPS();
+    }
+  }
+}catch(err){
+  localStorage.removeItem('cricketGPS_session_v3');
+}
+</script>
+</body>
+</html>
