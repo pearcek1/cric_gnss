@@ -121,9 +121,9 @@ button.secondary{background:#2b353e}
 }
 
 .record{
-  height:38vh;
-  min-height:240px;
-  max-height:430px;
+  height:30vh;
+  min-height:210px;
+  max-height:360px;
   border-radius:28px;
   background:var(--bad);
   font-size:34px;
@@ -133,6 +133,34 @@ button.secondary{background:#2b353e}
 .record:active{
   transform:scale(.99);
   filter:brightness(.9);
+}
+
+/* Large result displayed after recording */
+.shot-result{
+  background:#11171c;
+  border:1px solid var(--line);
+  border-radius:18px;
+  padding:16px;
+  margin:12px 0;
+  text-align:center;
+}
+
+.result-distance{
+  font-size:44px;
+  font-weight:900;
+  line-height:1;
+}
+
+.result-angle{
+  font-size:28px;
+  font-weight:800;
+  margin-top:8px;
+}
+
+.result-details{
+  color:var(--muted);
+  margin-top:10px;
+  font-size:13px;
 }
 
 .metrics{
@@ -246,7 +274,7 @@ HTTPS and location permission are required.
 <!-- SET CREASE -->
 <section id="calibrate" class="hidden">
 
-<h1>Set the crease</h1>
+<h1>1. Set the crease</h1>
 
 <div class="card">
 
@@ -271,7 +299,7 @@ current reported accuracy
 
 <p>
 Stand at the batting crease.
-Wait for the accuracy to settle, then save it.
+Wait for the GPS accuracy to settle, then save the crease.
 </p>
 
 <button id="setCrease">
@@ -280,6 +308,54 @@ SET CREASE
 
 <button id="cancel" class="secondary" style="margin-top:10px">
 BACK
+</button>
+
+</section>
+
+
+<!-- SET STRAIGHT -->
+<section id="setStraightScreen" class="hidden">
+
+<h1>2. Set straight</h1>
+
+<div class="card">
+
+<div class="status">
+
+<span>
+<i id="dotStraight" class="dot"></i>
+<span id="gpsStatusStraight">GPS active</span>
+</span>
+
+<span id="straightAcc">—</span>
+
+</div>
+
+<div class="big">
+↑
+</div>
+
+<div class="sub">
+walk straight down the pitch
+</div>
+
+</div>
+
+<p>
+Walk from the batting crease directly toward the bowler's end.
+The farther you walk, the more stable the direction measurement will be.
+</p>
+
+<p class="small">
+For BNJCA U11 practice, walking to the opposite crease gives you roughly the full 16 m pitch length.
+</p>
+
+<button id="setStraight">
+SET STRAIGHT
+</button>
+
+<button id="backToCrease" class="secondary" style="margin-top:10px">
+RESET CREASE
 </button>
 
 </section>
@@ -305,7 +381,7 @@ BACK
 
 <b id="sessionName" style="color:white"></b>
 
-<span>Crease ✓</span>
+<span>Crease ✓ Straight ✓</span>
 
 </div>
 
@@ -326,22 +402,28 @@ BALL
 </button>
 
 
-<div class="metrics">
+<!-- LARGE RESULT -->
+<div class="shot-result">
 
-<div class="metric">
-
-<b id="lastDistance">—</b>
-
-<span>LAST DISTANCE</span>
-
+<div class="result-distance" id="lastDistance">
+—
 </div>
 
+<div class="result-angle" id="lastAngle">
+—
+</div>
 
-<div class="metric">
+<div class="result-details">
 
-<b id="lastAccuracy">—</b>
+<span id="lastBearing">
+Bearing —
+</span>
 
-<span>GPS ACCURACY</span>
+&nbsp; | &nbsp;
+
+<span id="lastAccuracy">
+GPS —
+</span>
 
 </div>
 
@@ -380,8 +462,8 @@ END SESSION
 <tr>
 <th>#</th>
 <th>Distance</th>
+<th>Angle</th>
 <th>Accuracy</th>
-<th>Time</th>
 </tr>
 
 </thead>
@@ -436,7 +518,6 @@ let currentFix = null;
 let fixes = [];
 let session = null;
 
-
 const $ = id =>
     document.getElementById(id);
 
@@ -446,6 +527,7 @@ function show(id){
     [
         'setup',
         'calibrate',
+        'setStraightScreen',
         'field',
         'finished'
     ].forEach(x =>
@@ -468,11 +550,15 @@ function toast(message){
 
     setTimeout(
         () => $('toast').classList.remove('show'),
-        900
+        1200
     );
 
 }
 
+
+/* ============================
+   GPS
+============================ */
 
 function startGPS(){
 
@@ -485,7 +571,6 @@ function startGPS(){
         return;
 
     }
-
 
     if(watchId !== null)
         return;
@@ -525,7 +610,7 @@ function startGPS(){
             fixes.push(currentFix);
 
 
-            if(fixes.length > 30)
+            if(fixes.length > 50)
                 fixes.shift();
 
 
@@ -536,9 +621,17 @@ function startGPS(){
 
         error => {
 
-            $('gpsStatus1').textContent =
-            $('gpsStatus2').textContent =
+            const message =
                 'GPS error: ' + error.message;
+
+            $('gpsStatus1').textContent =
+                message;
+
+            $('gpsStatusStraight').textContent =
+                message;
+
+            $('gpsStatus2').textContent =
+                message;
 
         },
 
@@ -546,9 +639,7 @@ function startGPS(){
         {
 
             enableHighAccuracy:true,
-
             maximumAge:0,
-
             timeout:15000
 
         }
@@ -566,8 +657,11 @@ function updateGPS(){
         : null;
 
 
-    ['dot1','dot2']
-    .forEach(id =>
+    [
+        'dot1',
+        'dotStraight',
+        'dot2'
+    ].forEach(id =>
 
         $(id).classList.toggle(
             'on',
@@ -577,11 +671,20 @@ function updateGPS(){
     );
 
 
-    $('gpsStatus1').textContent =
-    $('gpsStatus2').textContent =
+    const status =
         currentFix
         ? 'GPS active'
         : 'Waiting for GPS…';
+
+
+    $('gpsStatus1').textContent =
+        status;
+
+    $('gpsStatusStraight').textContent =
+        status;
+
+    $('gpsStatus2').textContent =
+        status;
 
 
     let text =
@@ -590,11 +693,17 @@ function updateGPS(){
         : '—';
 
 
-    $('acc1').textContent = text;
+    $('acc1').textContent =
+        text;
 
-    $('coordAcc').textContent = text;
+    $('coordAcc').textContent =
+        text;
 
-    $('fieldAcc').textContent = text;
+    $('straightAcc').textContent =
+        text;
+
+    $('fieldAcc').textContent =
+        text;
 
 
     $('fixCount').textContent =
@@ -604,7 +713,7 @@ function updateGPS(){
 
 
 /*
-Choose the most accurate GPS reading
+Choose the best accuracy reading
 from approximately the last 8 seconds.
 */
 
@@ -638,9 +747,12 @@ function bestRecentFix(){
 }
 
 
+/* ============================
+   GEOMETRY
+============================ */
+
 /*
-Distance between two GPS coordinates.
-Haversine formula.
+Distance between coordinates.
 Returns metres.
 */
 
@@ -654,7 +766,6 @@ function hav(a,b){
 
     const dLat =
         rad(b.lat - a.lat);
-
 
     const dLon =
         rad(b.lon - a.lon);
@@ -684,7 +795,11 @@ function hav(a,b){
 
 
 /*
-Direction from crease to ball.
+Compass bearing:
+0 = north
+90 = east
+180 = south
+270 = west
 */
 
 function bearing(a,b){
@@ -755,6 +870,62 @@ function bearing(a,b){
 }
 
 
+/*
+Convert compass bearing into an angle
+relative to the direction of the pitch.
+
+0 = straight
+negative = left
+positive = right
+*/
+
+function relativeAngle(
+    straightBearing,
+    shotBearing
+){
+
+    let angle =
+        shotBearing
+        -
+        straightBearing;
+
+
+    while(angle > 180)
+        angle -= 360;
+
+
+    while(angle < -180)
+        angle += 360;
+
+
+    return angle;
+
+}
+
+
+/*
+Human-readable cricket direction.
+*/
+
+function angleText(angle){
+
+    const abs =
+        Math.abs(angle);
+
+
+    if(abs < 2)
+        return 'STRAIGHT';
+
+
+    if(angle < 0)
+        return `${abs.toFixed(1)}° LEFT`;
+
+
+    return `${abs.toFixed(1)}° RIGHT`;
+
+}
+
+
 function save(){
 
     localStorage.setItem(
@@ -765,9 +936,9 @@ function save(){
 }
 
 
-/*
-START SESSION
-*/
+/* ============================
+   START SESSION
+============================ */
 
 $('start').onclick = () => {
 
@@ -799,6 +970,10 @@ $('start').onclick = () => {
 
         crease:null,
 
+        straightPoint:null,
+
+        straightBearing:null,
+
         shots:[]
 
     };
@@ -817,9 +992,9 @@ $('cancel').onclick =
     () => show('setup');
 
 
-/*
-SET CREASE
-*/
+/* ============================
+   SET CREASE
+============================ */
 
 $('setCrease').onclick = () => {
 
@@ -843,6 +1018,90 @@ $('setCrease').onclick = () => {
     };
 
 
+    /*
+    Reset straight direction whenever
+    crease is changed.
+    */
+
+    session.straightPoint = null;
+    session.straightBearing = null;
+
+
+    save();
+
+
+    toast(
+        `Crease saved ±${fix.accuracy.toFixed(1)} m`
+    );
+
+
+    show(
+        'setStraightScreen'
+    );
+
+};
+
+
+/* ============================
+   SET STRAIGHT
+============================ */
+
+$('setStraight').onclick = () => {
+
+    let fix =
+        bestRecentFix();
+
+
+    if(
+        !fix
+        ||
+        !session?.crease
+    ){
+
+        alert(
+            'GPS or crease position is missing.'
+        );
+
+        return;
+
+    }
+
+
+    const distanceFromCrease =
+        hav(
+            session.crease,
+            fix
+        );
+
+
+    /*
+    We need some separation from the crease
+    or the direction becomes meaningless.
+    */
+
+    if(distanceFromCrease < 5){
+
+        alert(
+            'Move at least 5 metres straight down the pitch before setting straight.'
+        );
+
+        return;
+
+    }
+
+
+    session.straightPoint = {
+        ...fix
+    };
+
+
+    session.straightBearing =
+        bearing(
+            session.crease,
+            fix
+        );
+
+
     save();
 
 
@@ -864,15 +1123,28 @@ $('setCrease').onclick = () => {
 
 
     toast(
-        `Crease saved ±${fix.accuracy.toFixed(1)}m`
+        `Straight set at ${session.straightBearing.toFixed(1)}°`
     );
 
 };
 
 
-/*
-RECORD BALL
-*/
+$('backToCrease').onclick = () => {
+
+    session.crease = null;
+    session.straightPoint = null;
+    session.straightBearing = null;
+
+    save();
+
+    show('calibrate');
+
+};
+
+
+/* ============================
+   RECORD BALL
+============================ */
 
 function recordShot(){
 
@@ -884,8 +1156,24 @@ function recordShot(){
         !fix
         ||
         !session?.crease
+        ||
+        session?.straightBearing == null
     )
         return;
+
+
+    const shotBearing =
+        bearing(
+            session.crease,
+            fix
+        );
+
+
+    const shotAngle =
+        relativeAngle(
+            session.straightBearing,
+            shotBearing
+        );
 
 
     let shot = {
@@ -902,10 +1190,10 @@ function recordShot(){
             ),
 
         bearing:
-            bearing(
-                session.crease,
-                fix
-            ),
+            shotBearing,
+
+        angle:
+            shotAngle,
 
         recordedAt:
             new Date().toISOString()
@@ -923,10 +1211,6 @@ function recordShot(){
     render();
 
 
-    /*
-    Haptic confirmation
-    */
-
     if(navigator.vibrate){
 
         navigator.vibrate(
@@ -937,7 +1221,7 @@ function recordShot(){
 
 
     toast(
-        `Ball ${shot.n}: ${shot.distance.toFixed(1)} m`
+        `Ball ${shot.n} recorded`
     );
 
 }
@@ -950,9 +1234,6 @@ $('record').onclick =
 /*
 Bluetooth keyboard /
 presentation remote support.
-
-Any device that sends one of these
-keys can record a ball.
 */
 
 window.addEventListener(
@@ -989,9 +1270,9 @@ window.addEventListener(
 );
 
 
-/*
-UNDO
-*/
+/* ============================
+   UNDO
+============================ */
 
 $('undo').onclick = () => {
 
@@ -1016,9 +1297,9 @@ $('undo').onclick = () => {
 };
 
 
-/*
-UPDATE SCREEN
-*/
+/* ============================
+   DISPLAY
+============================ */
 
 function render(){
 
@@ -1046,8 +1327,22 @@ function render(){
             ' m';
 
 
+        $('lastAngle').textContent =
+            angleText(
+                last.angle
+            );
+
+
+        $('lastBearing').textContent =
+            'Bearing '
+            +
+            last.bearing.toFixed(1)
+            +
+            '°';
+
+
         $('lastAccuracy').textContent =
-            '±'
+            'GPS ±'
             +
             last.accuracy.toFixed(1)
             +
@@ -1058,8 +1353,16 @@ function render(){
     else{
 
         $('lastDistance').textContent =
-        $('lastAccuracy').textContent =
             '—';
+
+        $('lastAngle').textContent =
+            '—';
+
+        $('lastBearing').textContent =
+            'Bearing —';
+
+        $('lastAccuracy').textContent =
+            'GPS —';
 
     }
 
@@ -1084,23 +1387,11 @@ function render(){
             </td>
 
             <td>
-            ±${shot.accuracy.toFixed(1)}
+            ${angleText(shot.angle)}
             </td>
 
             <td>
-            ${
-                new Date(
-                    shot.recordedAt
-                )
-                .toLocaleTimeString(
-                    [],
-                    {
-                        hour:'2-digit',
-                        minute:'2-digit',
-                        second:'2-digit'
-                    }
-                )
-            }
+            ±${shot.accuracy.toFixed(1)}
             </td>
 
             </tr>
@@ -1113,9 +1404,9 @@ function render(){
 }
 
 
-/*
-END SESSION
-*/
+/* ============================
+   END SESSION
+============================ */
 
 $('end').onclick = () => {
 
@@ -1184,6 +1475,11 @@ $('end').onclick = () => {
         Longest:
         <b>${longest.toFixed(1)} m</b>
 
+        <br><br>
+
+        Straight bearing:
+        <b>${session.straightBearing.toFixed(1)}°</b>
+
     `;
 
 
@@ -1219,9 +1515,9 @@ $('newSession').onclick = () => {
 };
 
 
-/*
-CSV EXPORT
-*/
+/* ============================
+   CSV EXPORT
+============================ */
 
 $('export').onclick = () => {
 
@@ -1238,6 +1534,11 @@ $('export').onclick = () => {
         'crease_lon',
         'crease_accuracy_m',
 
+        'straight_lat',
+        'straight_lon',
+        'straight_accuracy_m',
+        'straight_bearing_deg',
+
         'shot_no',
         'recorded_at',
 
@@ -1246,7 +1547,9 @@ $('export').onclick = () => {
         'accuracy_m',
 
         'distance_m',
-        'bearing_deg'
+        'bearing_deg',
+        'angle_from_straight_deg',
+        'direction'
 
     ];
 
@@ -1284,6 +1587,11 @@ $('export').onclick = () => {
                 session.crease.lon,
                 session.crease.accuracy,
 
+                session.straightPoint.lat,
+                session.straightPoint.lon,
+                session.straightPoint.accuracy,
+                session.straightBearing,
+
                 shot.n,
 
                 shot.recordedAt,
@@ -1294,7 +1602,15 @@ $('export').onclick = () => {
 
                 shot.distance,
 
-                shot.bearing
+                shot.bearing,
+
+                shot.angle,
+
+                shot.angle < 0
+                    ? 'LEFT'
+                    : shot.angle > 0
+                    ? 'RIGHT'
+                    : 'STRAIGHT'
 
             ]
 
@@ -1358,10 +1674,9 @@ $('export').onclick = () => {
 };
 
 
-/*
-Restore session if browser was
-closed or refreshed.
-*/
+/* ============================
+   RESTORE SESSION
+============================ */
 
 try{
 
@@ -1373,7 +1688,11 @@ try{
         );
 
 
-    if(old?.crease){
+    if(
+        old?.crease
+        &&
+        old?.straightBearing != null
+    ){
 
         session =
             old;
@@ -1399,10 +1718,23 @@ try{
 
     }
 
+    else if(old?.crease){
+
+        session =
+            old;
+
+        show(
+            'setStraightScreen'
+        );
+
+        startGPS();
+
+    }
+
 }
 catch(error){}
 
 </script>
 
 </body>
-  </html>
+</html>
