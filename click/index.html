@@ -67,6 +67,26 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--blue)}
 .over-btn:hover .cap{filter:brightness(1.08)}
 .over-btn.pressed .cap{transform:translateY(7px)}
 .over-btn:focus .base{stroke:#f3f7fa;stroke-width:3}
+
+/* ---------- Adaptive sizing: follows each phone's own width and height ----------
+   (If a browser doesn't know "dvh", it ignores that line and keeps the fixed size above.) */
+html{-webkit-text-size-adjust:100%}
+.panel{--pad:clamp(10px,2.4vw,16px);padding:var(--pad)}
+main{padding:clamp(8px,2.2vw,16px) clamp(8px,2.2vw,14px) 90px}
+h1{font-size:clamp(1rem,4.6vw,1.35rem);margin:clamp(2px,.8dvh,6px) 0 clamp(6px,1.4dvh,14px)}
+.tabs{margin-bottom:clamp(8px,1.5dvh,15px)}
+.tabs button{padding:clamp(8px,1.5dvh,13px) 10px}
+#arc{max-height:36dvh}
+button.big{min-height:clamp(52px,9dvh,90px);font-size:clamp(1rem,4.4vw,1.2rem)}
+/* the three delivery buttons stay on screen while the page scrolls */
+#bowlingControls{position:sticky;bottom:0;z-index:5;background:var(--panel);margin:0 calc(var(--pad)*-1);padding:8px var(--pad) calc(8px + env(safe-area-inset-bottom));border-top:1px solid var(--line)}
+/* shorter phones: tighter stats and hint */
+@media (max-height:740px){
+  #stats{max-width:none;display:grid;grid-template-columns:1fr 1fr;column-gap:20px}
+  #stats .total{grid-column:1/-1}
+  #arcHint{min-height:1.4em;margin:6px auto 8px}
+  .name{margin:2px 0 2px}
+}
 </style>
 </head>
 <body><main>
