@@ -39,5 +39,5 @@ excludes rights you have under the Australian Consumer Law.
 ## Permissions and contact
 
 To ask for permission to use this work beyond these terms, contact
-[your email address].
+pearce85data@gmail.com.
 
