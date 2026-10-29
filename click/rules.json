@@ -1,0 +1,282 @@
+{
+  "schema_version": 4,
+  "associations": {
+    "BNJCA": {
+      "name": "BNJCA",
+      "season": "Summer 2026-27",
+      "divisions": {
+        "boys": {
+          "U11": {
+            "players": {
+              "minimum": 7,
+              "maximum": 11
+            },
+            "innings": {
+              "overs": 25,
+              "duration_min": 90,
+              "out_means_out": true,
+              "wickets": {
+                "maximum": 8,
+                "based_on_batters": true,
+                "batters_minus": 1
+              },
+              "mandatory_breaks": [
+                {
+                  "type": "drinks",
+                  "after_over": 13,
+                  "duration_min": 3,
+                  "counts_toward_innings_time": true
+                }
+              ]
+            },
+            "bowling": {
+              "legal_balls_per_over": 6,
+              "maximum_deliveries_per_over": 8,
+              "extras_count_towards_cap": [
+                "wide",
+                "no_ball"
+              ],
+              "free_hit_on_no_ball": false,
+              "max_overs_per_bowler": null
+            },
+            "keeper": {
+              "change_after_over": 13,
+              "must_change_keeper": true,
+              "keeper_may_bowl_while_keeping": false
+            },
+            "dismissals": {
+              "bowled": true,
+              "caught": true,
+              "run_out": true,
+              "stumped": true,
+              "lbw": false,
+              "hit_wicket": true,
+              "obstruction_field": true
+            },
+            "dismissals_allowed_on": {
+              "wide": [
+                "run_out",
+                "stumped",
+                "hit_wicket",
+                "obstruction_field"
+              ],
+              "no_ball": [
+                "run_out",
+                "obstruction_field"
+              ]
+            },
+            "over_rate": {
+              "derive_target_from_duration": true,
+              "default_target_seconds": 210
+            },
+            "_notes": {
+              "dismissals_allowed_on.wide": "MCC Law 22.9. Confirm it matches the association rules.",
+              "dismissals_allowed_on.no_ball": "Provisional: confirm against the association rules.",
+              "bowling.max_overs_per_bowler": "null = no limit recorded. Fill in.",
+              "hours_of_play": "Rule 17.2 Hours of Play. The printed table shows the first start as '1:30 am'; read as 1:30 pm. Finish 4:40 pm = 1:30 pm + 90 min + 10 min break + 90 min."
+            },
+            "hours_of_play": {
+              "scheduled_start": "13:30",
+              "scheduled_finish": "16:40",
+              "innings_break": {
+                "duration_min": 10,
+                "after": "earlier_of_overs_complete_or_all_out",
+                "counts_toward_innings_time": false
+              },
+              "when_first_innings_all_out": {
+                "finish_time": "all_out_time",
+                "second_innings_start": "all_out_time_plus_innings_break"
+              },
+              "second_innings": {
+                "full_overs_entitlement": true,
+                "ends_early_only_if_all_out": true,
+                "may_conclude_early_if_both_teams_agree": true
+              }
+            }
+          }
+        },
+        "girls": {
+          "U11": {
+            "players": {
+              "minimum": 5,
+              "maximum": 9
+            },
+            "innings": {
+              "overs": 20,
+              "duration_min": 75,
+              "out_means_out": true,
+              "wickets": {
+                "maximum": 8,
+                "based_on_batters": true,
+                "batters_minus": 1
+              },
+              "mandatory_breaks": [
+                {
+                  "type": "drinks",
+                  "after_over": 10,
+                  "duration_min": 3,
+                  "counts_toward_innings_time": true
+                }
+              ]
+            },
+            "bowling": {
+              "legal_balls_per_over": 6,
+              "maximum_deliveries_per_over": 6,
+              "extras_count_towards_cap": [
+                "wide",
+                "no_ball"
+              ],
+              "free_hit_on_no_ball": false,
+              "max_overs_per_bowler": null
+            },
+            "keeper": {
+              "change_after_over": 10,
+              "must_change_keeper": true,
+              "keeper_may_bowl_while_keeping": false
+            },
+            "dismissals": {
+              "bowled": true,
+              "caught": true,
+              "run_out": true,
+              "stumped": true,
+              "lbw": false,
+              "hit_wicket": true,
+              "obstruction_field": true
+            },
+            "dismissals_allowed_on": {
+              "wide": [
+                "run_out",
+                "stumped",
+                "hit_wicket",
+                "obstruction_field"
+              ],
+              "no_ball": [
+                "run_out",
+                "obstruction_field"
+              ]
+            },
+            "over_rate": {
+              "derive_target_from_duration": true,
+              "default_target_seconds": 210
+            },
+            "_notes": {
+              "dismissals_allowed_on.wide": "MCC Law 22.9. Confirm it matches the association rules.",
+              "dismissals_allowed_on.no_ball": "Provisional: confirm against the association rules.",
+              "bowling.max_overs_per_bowler": "null = no limit recorded. Fill in.",
+              "hours_of_play": "Scheduled start/finish not set for Girls U11 yet: fill in from rule 17.2."
+            },
+            "hours_of_play": {
+              "scheduled_start": "",
+              "scheduled_finish": "",
+              "innings_break": {
+                "duration_min": 10,
+                "after": "earlier_of_overs_complete_or_all_out",
+                "counts_toward_innings_time": false
+              },
+              "when_first_innings_all_out": {
+                "finish_time": "all_out_time",
+                "second_innings_start": "all_out_time_plus_innings_break"
+              },
+              "second_innings": {
+                "full_overs_entitlement": true,
+                "ends_early_only_if_all_out": true,
+                "may_conclude_early_if_both_teams_agree": true
+              }
+            }
+          }
+        },
+        "mixed": {}
+      }
+    },
+    "Custom": {
+      "name": "Custom",
+      "season": "",
+      "divisions": {
+        "boys": {},
+        "girls": {},
+        "mixed": {
+          "Custom": {
+            "custom": true,
+            "players": {
+              "minimum": 7,
+              "maximum": 11
+            },
+            "innings": {
+              "overs": 20,
+              "duration_min": null,
+              "out_means_out": true,
+              "wickets": {
+                "maximum": 10,
+                "based_on_batters": true,
+                "batters_minus": 1
+              },
+              "mandatory_breaks": []
+            },
+            "bowling": {
+              "legal_balls_per_over": 6,
+              "maximum_deliveries_per_over": 12,
+              "extras_count_towards_cap": [
+                "wide",
+                "no_ball"
+              ],
+              "free_hit_on_no_ball": false,
+              "max_overs_per_bowler": null
+            },
+            "keeper": {
+              "change_after_over": null,
+              "must_change_keeper": false,
+              "keeper_may_bowl_while_keeping": true
+            },
+            "dismissals": {
+              "bowled": true,
+              "caught": true,
+              "run_out": true,
+              "stumped": true,
+              "lbw": true,
+              "hit_wicket": true,
+              "obstruction_field": true
+            },
+            "dismissals_allowed_on": {
+              "wide": [
+                "run_out",
+                "stumped",
+                "hit_wicket",
+                "obstruction_field"
+              ],
+              "no_ball": [
+                "run_out",
+                "obstruction_field"
+              ]
+            },
+            "over_rate": {
+              "derive_target_from_duration": true,
+              "default_target_seconds": 210
+            },
+            "hours_of_play": {
+              "scheduled_start": "",
+              "scheduled_finish": "",
+              "innings_break": {
+                "duration_min": 10,
+                "after": "earlier_of_overs_complete_or_all_out",
+                "counts_toward_innings_time": false
+              },
+              "when_first_innings_all_out": {
+                "finish_time": "all_out_time",
+                "second_innings_start": "all_out_time_plus_innings_break"
+              },
+              "second_innings": {
+                "full_overs_entitlement": false,
+                "ends_early_only_if_all_out": false,
+                "may_conclude_early_if_both_teams_agree": true
+              }
+            },
+            "_notes": {
+              "custom": "Starting values only. On the New match screen every rule here can be changed, and the last settings are remembered on that device.",
+              "bowling.maximum_deliveries_per_over": "12 is the largest the app allows, so effectively no cap."
+            }
+          }
+        }
+      }
+    }
+  }
+}
